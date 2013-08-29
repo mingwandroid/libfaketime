@@ -42,7 +42,7 @@
 CC = gcc
 INSTALL = install
 
-PREFIX = /usr/local
+PREFIX ?= /usr/local
 
 # If you get an error about an unsupported architecture, remove it. Some
 # versions of XCode support different subsets of architectures, depending on
@@ -61,6 +61,9 @@ all: ${LIBS} ${BINS}
 
 libfaketime.dylib.${SONAME}: ${LIB_SRC}
 	${CC} -o $@ ${CFLAGS} $<
+
+faketime:
+	${CC} -o faketime faketime.c -DPREFIX='"'$(PREFIX)'"'
 
 clean:
 	@rm -f ${OBJ} ${LIBS} ${BINS}

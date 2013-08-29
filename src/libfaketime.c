@@ -49,6 +49,9 @@
 #include <sys/timeb.h>
 #include <dlfcn.h>
 
+/* Mac OS X does not implement clock_gettime();
+ * But as we need it ourselves, we implement it as apple_clock_gettime();
+ */
 #ifdef __MACH__
 #include <mach/mach_time.h>
 /* Values taken from linux/time.h ; unlike other recommendations for OS X, do
@@ -60,16 +63,17 @@
 #define CLOCK_PROCESS_CPUTIME_ID 2
 typedef int clockid_t ;
 /* last post in http://stackoverflow.com/questions/5167269/clock-gettime-alternative-in-mac-os-x */
-int apple_clock_gettime(int clk_id, struct timespec *t){
-    mach_timebase_info_data_t timebase;
-    mach_timebase_info(&timebase);
-    uint64_t time;
-    time = mach_absolute_time();
-    double nseconds = ((double)time * (double)timebase.numer)/((double)timebase.denom);
-    double seconds = ((double)time * (double)timebase.numer)/((double)timebase.denom * 1e9);
-    t->tv_sec = seconds;
-    t->tv_nsec = nseconds;
-    return 0;
+int apple_clock_gettime(int clk_id, struct timespec *t)
+{
+  mach_timebase_info_data_t timebase;
+  mach_timebase_info(&timebase);
+  uint64_t time;
+  time = mach_absolute_time();
+  double nseconds = ((double)time * (double)timebase.numer)/((double)timebase.denom);
+  double seconds = ((double)time * (double)timebase.numer)/((double)timebase.denom * 1e9);
+  t->tv_sec = seconds;
+  t->tv_nsec = nseconds;
+  return 0;
 }
 #endif
 
@@ -128,7 +132,8 @@ static sem_t *shared_sem = NULL;
 static struct ft_shared_s *ft_shared = NULL;
 
 /** Storage format for timestamps written to file. Big endian.*/
-struct saved_timestamp {
+struct saved_timestamp 
+{
   int64_t sec;
   uint64_t nsec;
 };
@@ -248,7 +253,8 @@ void ft_cleanup (void)
 }
 
 /** Get system time from system for all clocks */
-static void system_time_from_system (struct system_time_s * systime) {
+static void system_time_from_system (struct system_time_s * systime) 
+{
 #ifdef __APPLE__
   /* from http://stackoverflow.com/questions/5167269/clock-gettime-alternative-in-mac-os-x */
   clock_serv_t cclock;
@@ -398,7 +404,8 @@ static bool load_time(struct timespec *tp)
 static int fake_stat_disabled = 0;
 
 /* Contributed by Philipp Hachtmann in version 0.6 */
-int __xstat (int ver, const char *path, struct stat *buf) {
+int __xstat (int ver, const char *path, struct stat *buf) 
+{
   if (NULL == real_stat) {  /* dlsym() failed */
 #ifdef DEBUG
     (void) fprintf(stderr, "faketime problem: original stat() not found.\n");
@@ -423,7 +430,8 @@ int __xstat (int ver, const char *path, struct stat *buf) {
 }
 
 /* Contributed by Philipp Hachtmann in version 0.6 */
-int __fxstat (int ver, int fildes, struct stat *buf) {
+int __fxstat (int ver, int fildes, struct stat *buf) 
+{
   if (NULL == real_fstat) {  /* dlsym() failed */
 #ifdef DEBUG
     (void) fprintf(stderr, "faketime problem: original fstat() not found.\n");
@@ -448,7 +456,8 @@ int __fxstat (int ver, int fildes, struct stat *buf) {
 
 /* Added in v0.8 as suggested by Daniel Kahn Gillmor */
 #ifndef NO_ATFILE
-int __fxstatat(int ver, int fildes, const char *filename, struct stat *buf, int flag) {
+int __fxstatat(int ver, int fildes, const char *filename, struct stat *buf, int flag) 
+{
 
   if (NULL == real_fstatat) {  /* dlsym() failed */
 #ifdef DEBUG
@@ -474,7 +483,8 @@ int __fxstatat(int ver, int fildes, const char *filename, struct stat *buf, int 
 #endif
 
 /* Contributed by Philipp Hachtmann in version 0.6 */
-int __lxstat (int ver, const char *path, struct stat *buf) {
+int __lxstat (int ver, const char *path, struct stat *buf)
+{
   if (NULL == real_lstat) {  /* dlsym() failed */
 #ifdef DEBUG
     (void) fprintf(stderr, "faketime problem: original lstat() not found.\n");
@@ -498,7 +508,8 @@ int __lxstat (int ver, const char *path, struct stat *buf) {
 }
 
 /* Contributed by Philipp Hachtmann in version 0.6 */
-int __xstat64 (int ver, const char *path, struct stat64 *buf) {
+int __xstat64 (int ver, const char *path, struct stat64 *buf) 
+{
   if (NULL == real_stat64) {  /* dlsym() failed */
 #ifdef DEBUG
     (void) fprintf(stderr, "faketime problem: original stat() not found.\n");
@@ -522,7 +533,8 @@ int __xstat64 (int ver, const char *path, struct stat64 *buf) {
 }
 
 /* Contributed by Philipp Hachtmann in version 0.6 */
-int __fxstat64 (int ver, int fildes, struct stat64 *buf) {
+int __fxstat64 (int ver, int fildes, struct stat64 *buf) 
+{
   if (NULL == real_fstat64) {  /* dlsym() failed */
 #ifdef DEBUG
     (void) fprintf(stderr, "faketime problem: original fstat() not found.\n");
@@ -547,7 +559,8 @@ int __fxstat64 (int ver, int fildes, struct stat64 *buf) {
 
 /* Added in v0.8 as suggested by Daniel Kahn Gillmor */
 #ifndef NO_ATFILE
-int __fxstatat64 (int ver, int fildes, const char *filename, struct stat64 *buf, int flag) {
+int __fxstatat64 (int ver, int fildes, const char *filename, struct stat64 *buf, int flag) 
+{
   if (NULL == real_fstatat64) {  /* dlsym() failed */
 #ifdef DEBUG
     (void) fprintf(stderr, "faketime problem: original fstatat64() not found.\n");
@@ -572,7 +585,8 @@ int __fxstatat64 (int ver, int fildes, const char *filename, struct stat64 *buf,
 #endif
 
 /* Contributed by Philipp Hachtmann in version 0.6 */
-int __lxstat64 (int ver, const char *path, struct stat64 *buf){
+int __lxstat64 (int ver, const char *path, struct stat64 *buf)
+{
   if (NULL == real_lstat64) {  /* dlsym() failed */
 #ifdef DEBUG
     (void) fprintf(stderr, "faketime problem: original lstat() not found.\n");
@@ -637,11 +651,9 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
  */
 int usleep(useconds_t usec)
 {
-
   if (real_usleep == NULL) {
     return -1;
   }
-
   return (*real_usleep)((user_rate_set)?((1.0 / user_rate) * usec):usec);
 }
 
@@ -654,7 +666,6 @@ unsigned int sleep(unsigned int seconds)
   if (real_sleep == NULL) {
     return 0;
   }
-
   ret = (*real_sleep)((user_rate_set)?((1.0 / user_rate) * seconds):seconds);
   return (user_rate_set)?(user_rate * ret):ret;
 }
@@ -668,107 +679,112 @@ unsigned int alarm(unsigned int seconds)
   if (real_alarm == NULL) {
     return -1;
   }
-
   ret = (*real_alarm)((user_rate_set)?((1.0 / user_rate) * seconds):seconds);
   return (user_rate_set)?(user_rate * ret):ret;
 }
 
-time_t time(time_t *time_tptr) {
-    time_t result;
-    time_t null_dummy;
-    if (time_tptr == NULL) {
-        time_tptr = &null_dummy;
-        /* (void) fprintf(stderr, "NULL pointer caught in time().\n"); */
-    }
-    result = (*real_time)(time_tptr);
-    if (result == ((time_t) -1)) return result;
-
-    /* pass the real current time to our faking version, overwriting it */
-    result = fake_time(time_tptr);
-
-    /* return the result to the caller */
-    return result;
+time_t time(time_t *time_tptr) 
+{
+  time_t result;
+  time_t null_dummy;
+  if (time_tptr == NULL) {
+      time_tptr = &null_dummy;
+      /* (void) fprintf(stderr, "NULL pointer caught in time().\n"); */
+  }
+  result = (*real_time)(time_tptr);
+  if (result == ((time_t) -1)) return result;
+  /* pass the real current time to our faking version, overwriting it */
+  result = fake_time(time_tptr);
+  /* return the result to the caller */
+  return result;
 }
 
 
-int ftime(struct timeb *tp) {
-    int result;
+int ftime(struct timeb *tp)
+{
+  int result;
 
-    /* sanity check */
-    if (tp == NULL)
-        return 0;               /* ftime() always returns 0, see manpage */
+  /* sanity check */
+  if (tp == NULL)
+      return 0;               /* ftime() always returns 0, see manpage */
 
-    /* Check whether we've got a pointer to the real ftime() function yet */
-    if (NULL == real_ftime) {  /* dlsym() failed */
+  /* Check whether we've got a pointer to the real ftime() function yet */
+  if (NULL == real_ftime) {  /* dlsym() failed */
 #ifdef DEBUG
-            (void) fprintf(stderr, "faketime problem: original ftime() not found.\n");
+    (void) fprintf(stderr, "faketime problem: original ftime() not found.\n");
 #endif
-            tp = NULL;
-            return 0; /* propagate error to caller */
-    }
+    tp = NULL;
+    return 0; /* propagate error to caller */
+  }
 
-    /* initialize our result with the real current time */
-    result = (*real_ftime)(tp);
+  /* initialize our result with the real current time */
+  result = (*real_ftime)(tp);
 
-    /* pass the real current ftime to our faking version, overwriting it */
-    result = fake_ftime(tp);
+  /* pass the real current ftime to our faking version, overwriting it */
+  result = fake_ftime(tp);
 
-    /* return the result to the caller */
-    return result; /* will always be 0 (see manpage) */
+  /* return the result to the caller */
+  return result; /* will always be 0 (see manpage) */
 }
 
-int gettimeofday(struct timeval *tv, void *tz) {
-    int result;
+int gettimeofday(struct timeval *tv, void *tz) 
+{
+  int result;
 
-    /* sanity check */
-    if (tv == NULL) {
-        return -1;
-    }
+  /* sanity check */
+  if (tv == NULL) {
+      return -1;
+  }
 
-    /* Check whether we've got a pointer to the real ftime() function yet */
-    if (NULL == real_gettimeofday) {  /* dlsym() failed */
+  /* Check whether we've got a pointer to the real ftime() function yet */
+  if (NULL == real_gettimeofday) {  /* dlsym() failed */
 #ifdef DEBUG
-            (void) fprintf(stderr, "faketime problem: original gettimeofday() not found.\n");
+     (void) fprintf(stderr, "faketime problem: original gettimeofday() not found.\n");
 #endif
-            return -1; /* propagate error to caller */
-    }
+     return -1; /* propagate error to caller */
+  }
 
-    /* initialize our result with the real current time */
-    result = (*real_gettimeofday)(tv, tz);
-    if (result == -1) return result; /* original function failed */
+  /* initialize our result with the real current time */
+  result = (*real_gettimeofday)(tv, tz);
+  if (result == -1) return result; /* original function failed */
 
-    /* pass the real current time to our faking version, overwriting it */
-    result = fake_gettimeofday(tv, tz);
+  /* pass the real current time to our faking version, overwriting it */
+  result = fake_gettimeofday(tv, tz);
 
-    /* return the result to the caller */
-    return result;
+  /* return the result to the caller */
+  return result;
 }
 
-int clock_gettime(clockid_t clk_id, struct timespec *tp) {
-    int result;
+int clock_gettime(clockid_t clk_id, struct timespec *tp) 
+{
+  int result;
 
-    /* sanity check */
-    if (tp == NULL) {
-        return -1;
-    }
+  /* sanity check */
+  if (tp == NULL) {
+      return -1;
+  }
 
-    if (NULL == real_clock_gettime) {  /* dlsym() failed */
-        real_clock_gettime = apple_clock_gettime;
-#ifdef DEBUG
-            (void) fprintf(stderr, "faketime problem: original clock_gettime() not found.\n");
+  if (NULL == real_clock_gettime) {  /* dlsym() failed, maybe because we're on OS X */
+#ifdef __MACH__
+    real_clock_gettime = apple_clock_gettime; /* we wrote it, so it's there for sure */
 #endif
-            return -1; /* propagate error to caller */
-    }
+#ifndef __MACH__
+#ifdef DEBUG
+    (void) fprintf(stderr, "faketime problem: original clock_gettime() not found.\n");
+#endif
+    return -1; /* propagate error to caller */
+#endif
+  }
 
-    /* initialize our result with the real current time */
-    result = (*real_clock_gettime)(clk_id, tp);
-    if (result == -1) return result; /* original function failed */
+  /* initialize our result with the real current time */
+  result = (*real_clock_gettime)(clk_id, tp);
+  if (result == -1) return result; /* original function failed */
 
-    /* pass the real current time to our faking version, overwriting it */
-    result = fake_clock_gettime(clk_id, tp);
+  /* pass the real current time to our faking version, overwriting it */
+  result = fake_clock_gettime(clk_id, tp);
 
-    /* return the result to the caller */
-    return result;
+  /* return the result to the caller */
+  return result;
 }
 
 static void parse_ft_string(const char *user_faked_time)
@@ -849,7 +865,7 @@ void __attribute__ ((constructor)) ftpl_init(void)
     real_time = dlsym(RTLD_NEXT, "time");
     real_ftime = dlsym(RTLD_NEXT, "ftime");
     real_gettimeofday = dlsym(RTLD_NEXT, "gettimeofday");
-    real_clock_gettime = dlsym(RTLD_NEXT, "clock_gettime");
+    real_clock_gettime = dlsym(RTLD_NEXT, "clock_gettime"); /* Will fail on Mac OS X, but that's OK */
     real_nanosleep = dlsym(RTLD_NEXT, "nanosleep");
     real_usleep = dlsym(RTLD_NEXT, "usleep");
     real_sleep = dlsym(RTLD_NEXT, "sleep");
@@ -981,9 +997,8 @@ static void remove_trailing_eols(char *line)
 }
 
 
-int fake_clock_gettime(clockid_t clk_id, struct timespec *tp) {
-
-
+int fake_clock_gettime(clockid_t clk_id, struct timespec *tp)
+{
     /* variables used for caching, introduced in version 0.6 */
     static time_t last_data_fetch = 0;  /* not fetched previously at first call */
     static int cache_expired = 1;       /* considered expired at first call */
@@ -1158,7 +1173,8 @@ static pthread_mutex_t time_mutex=PTHREAD_MUTEX_INITIALIZER;
 }
 
 
-time_t fake_time(time_t *time_tptr) {
+time_t fake_time(time_t *time_tptr)
+{
   struct timespec tp;
 
   tp.tv_sec = *time_tptr;
@@ -1168,7 +1184,8 @@ time_t fake_time(time_t *time_tptr) {
   return *time_tptr;
 }
 
-int fake_ftime(struct timeb *tp) {
+int fake_ftime(struct timeb *tp)
+{
   struct timespec ts;
   int ret;
   ts.tv_sec = tp->time;
@@ -1181,7 +1198,8 @@ int fake_ftime(struct timeb *tp) {
   return ret;
 }
 
-int fake_gettimeofday(struct timeval *tv, void *tz) {
+int fake_gettimeofday(struct timeval *tv, void *tz)
+{
   struct timespec ts;
   int ret;
   ts.tv_sec = tv->tv_sec;
@@ -1200,19 +1218,23 @@ int fake_gettimeofday(struct timeval *tv, void *tz) {
 #ifndef __APPLE__
 /* Added in v0.7 as suggested by Jamie Cameron, Google */
 #ifdef FAKE_INTERNAL_CALLS
-int __gettimeofday(struct timeval *tv, void *tz) {
+int __gettimeofday(struct timeval *tv, void *tz)
+{
     return gettimeofday(tv, tz);
 }
 
-int __clock_gettime(clockid_t clk_id, struct timespec *tp) {
+int __clock_gettime(clockid_t clk_id, struct timespec *tp)
+{
     return clock_gettime(clk_id, tp);
 }
 
-int __ftime(struct timeb *tp) {
+int __ftime(struct timeb *tp)
+{
     return ftime(tp);
 }
 
-time_t __time(time_t *time_tptr) {
+time_t __time(time_t *time_tptr)
+{
     return time(time_tptr);
 }
 #endif
