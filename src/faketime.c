@@ -43,6 +43,7 @@ static const char *date_cmd = "date";
 #endif
 
 #define PATH_BUFSIZE 4096
+#define DEBUG
 
 /* semaphore and shared memory names */
 char sem_name[PATH_BUFSIZE] = {0}, shm_name[PATH_BUFSIZE] = {0};
@@ -128,28 +129,44 @@ int main (int argc, char **argv)
     // TODO get seconds
     pipe(pfds);
     int ret = EXIT_SUCCESS;
+    int i;
+    long now;
+    long dateresult;
 
     if (0 == (child_pid = fork())) {
       close(1);       /* close normal stdout */
       dup(pfds[1]);   /* make stdout same as pfds[1] */
       close(pfds[0]); /* we don't need this */
       if (EXIT_SUCCESS != execlp(date_cmd, date_cmd, "-d", argv[curr_opt], "+%s",(char *) NULL)) {
-	perror("Running (g)date failed");
-	exit(EXIT_FAILURE);
+	    perror("Running (g)date failed");
+    	exit(EXIT_FAILURE);
       }
     } else {
-      char buf[256] = {0}; /* e will have way less than 256 digits */
+      char buf[256] = {0}; /* we will have way less than 256 digits */
+      for (i=0; i<256; i++) buf[i] = 0;
       close(pfds[1]);   /* we won't write to this */
       read(pfds[0], buf, 256);
       waitpid(child_pid, &ret, 0);
       if (ret != EXIT_SUCCESS) {
-	printf("Error: Timestamp to fake not recognized, please re-try with a "
-	       "different timestamp.\n");
-	exit(EXIT_FAILURE);
+	    printf("Error: Timestamp to fake not recognized, please re-try with a "
+	           "different timestamp.\n");
+    	exit(EXIT_FAILURE);
       }
-      offset = atol(buf) - time(NULL);
-      ret = snprintf(buf, sizeof(buf), "%s%ld", (offset >= 0)?"+":"", offset);
+      now=time(NULL);
+      dateresult = atol(buf);
+      offset = dateresult - now;
+      // printf("buf=%s, dateresult=%ld, now=%ld, offset=%ld\n",buf,dateresult,now,offset);
+      if (offset >= 0) {
+        ret = snprintf(buf, 255, "+%ld", offset);
+      }
+      else {
+        ret = snprintf(buf, 255, "%ld", offset);
+      }
+
       setenv("FAKETIME", buf, true);
+
+      // printf("FAKETIME=%s\n",buf);
+
     }
   } else {
     /* simply pass format string along */
