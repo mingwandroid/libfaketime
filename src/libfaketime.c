@@ -49,6 +49,30 @@
 #include <sys/timeb.h>
 #include <dlfcn.h>
 
+#ifdef __MACH__
+#include <mach/mach_time.h>
+/* Values taken from linux/time.h ; unlike other recommendations for OS X, do
+   not set them all to 0 to avoid duplicate case value warnings below */
+#define CLOCK_REALTIME 0
+#define CLOCK_MONOTONIC 1
+#define CLOCK_MONOTONIC_RAW 4
+#define CLOCK_THREAD_CPUTIME_ID 3
+#define CLOCK_PROCESS_CPUTIME_ID 2
+typedef int clockid_t ;
+/* last post in http://stackoverflow.com/questions/5167269/clock-gettime-alternative-in-mac-os-x */
+int apple_clock_gettime(int clk_id, struct timespec *t){
+    mach_timebase_info_data_t timebase;
+    mach_timebase_info(&timebase);
+    uint64_t time;
+    time = mach_absolute_time();
+    double nseconds = ((double)time * (double)timebase.numer)/((double)timebase.denom);
+    double seconds = ((double)time * (double)timebase.numer)/((double)timebase.denom * 1e9);
+    t->tv_sec = seconds;
+    t->tv_nsec = nseconds;
+    return 0;
+}
+#endif
+
 #define BUFFERLEN   256
 
 /* real pointer to faked functions */
@@ -276,7 +300,8 @@ static void save_time(struct timespec *tp)
 
     // write as big endian
 #if __BYTE_ORDER == __BIG_ENDIAN
-    time_write = {tp->tv_sec, tp->tv_nsec};
+    time_write.sec = tp->tv_sec;
+    time_write.nsec = tp->tv_nsec;
 #else
   if (tp->tv_sec < 0) {
     uint64_t abs_sec = 0 - tp->tv_sec;
@@ -728,6 +753,7 @@ int clock_gettime(clockid_t clk_id, struct timespec *tp) {
     }
 
     if (NULL == real_clock_gettime) {  /* dlsym() failed */
+        real_clock_gettime = apple_clock_gettime;
 #ifdef DEBUG
             (void) fprintf(stderr, "faketime problem: original clock_gettime() not found.\n");
 #endif
