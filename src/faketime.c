@@ -165,7 +165,7 @@ int main (int argc, char **argv)
 
       setenv("FAKETIME", buf, true);
 
-      // printf("FAKETIME=%s\n",buf);
+      // printf("FAKETIME=%s<\n",getenv("FAKETIME"));
 
     }
   } else {
