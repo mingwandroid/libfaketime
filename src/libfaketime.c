@@ -15,7 +15,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define BUGHUNT
+// #define BUGHUNT
 
 #define _GNU_SOURCE             /* required to get RTLD_NEXT defined */
 #define _XOPEN_SOURCE           /* required to get strptime() defined */
@@ -727,9 +727,21 @@ time_t time(time_t *time_tptr)
       /* (void) fprintf(stderr, "NULL pointer caught in time().\n"); */
   }
 #ifdef BUGHUNT
-  fprintf(stderr, "libfaketime: time(%p) going for reality\n", time_tptr);
+  fprintf(stderr, "libfaketime: time(%p) going for reality: real_time %p, gettimeofday %p\n", time_tptr, real_time, fake_gettimeofday);
 #endif
+#ifndef __APPLE__
   result = (*real_time)(time_tptr);
+#else
+  // Apple's time() implementation internally calls gettimeofday(); we need dbrashear's approach to break this behavior in order to
+  // avoid double-application of relative fake time changes.
+  struct timeval apple_tv; 
+  void *apple_tz = NULL;
+  (*real_gettimeofday)(&apple_tv, apple_tz);
+#ifdef BUGHUNT
+  fprintf(stderr, "libfaketime: __APPLE__ workaround for time(): %ld\n", apple_tv.tv_sec);
+#endif
+  *time_tptr = apple_tv.tv_sec; 
+#endif
 #ifdef BUGHUNT
   fprintf(stderr, "libfaketime: time(%p) beyond reality\n", time_tptr);
 #endif
