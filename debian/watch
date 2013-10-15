@@ -1,0 +1,4 @@
+version=3
+
+# <Webpage URL> <string match>
+http://www.code-wizards.com/projects/libfaketime/ libfaketime-(.*)\.tar\.gz

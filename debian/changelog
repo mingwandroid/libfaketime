@@ -1,0 +1,33 @@
+faketime (0.9.6) unstable; urgency=low
+
+  * Switched to https://github.com/mingwandroid/libfaketime.git
+  * Zero out the tv_nsec in all stat functions
+  * Ensure early calls return correct results
+  * Ensure late calls return correct results
+  * Prevent cache expiring when ft_mode is FT_FREEZE
+
+ -- Ray Donnelly <mingw.android@gmail.com>  Tue, 15 Oct 2013 22:42:01 +0100
+
+faketime (0.9.1-2) unstable; urgency=low
+
+  * fix FTBFS on kFreeBSD (Closes: #712709) (Thanks, Petr Salinger)
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Thu, 20 Jun 2013 09:28:46 -0400
+
+faketime (0.9.1-1) unstable; urgency=low
+
+  * New Upstream Release
+  * Moved to source format 3.0 (quilt)
+  * debhelper compat level 9
+  * bumped Standards-Version to 3.9.3 (no changes needed)
+  * fix failures against libc 2.17 (Closes: #699559) (thanks, Gerardo
+    Malazdrewicz)
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Sun, 03 Feb 2013 01:42:35 -0500
+
+faketime (0.8-1) unstable; urgency=low
+
+  * Initial release (Closes: #495630)
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Tue, 26 Aug 2008 14:37:38 -0400
+
